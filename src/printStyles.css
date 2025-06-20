@@ -1,0 +1,29 @@
+@media print {
+  /* Hide all buttons and interactive elements */
+  button,
+  .btn,
+  input,
+  select,
+  .alert {
+    display: none !important;
+  }
+
+  /* Optional: make background white and text black for printing */
+  body {
+    background: white;
+    color: black;
+  }
+
+  /* Style the bookings table nicely for print */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: left;
+  }
+}
