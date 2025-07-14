@@ -1,3 +1,5 @@
+// src/pages/MockPayment.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../supabaseClient';
@@ -14,7 +16,7 @@ const MockPayment = () => {
   const cycleId = params.get('cycle');
   const startDate = params.get('start');
   const endDate = params.get('end');
-  const accessoryIds = params.getAll('accessory'); // ✅ new
+  const accessoryIds = params.getAll('accessory');
 
   function calculateTotal(start, end, price, accessories = []) {
     const startTime = new Date(start);
@@ -30,19 +32,12 @@ const MockPayment = () => {
   useEffect(() => {
     const loadAccessories = async () => {
       if (accessoryIds.length === 0) return;
-
       const { data, error } = await supabase
         .from('accessories')
         .select('id, name, price')
         .in('id', accessoryIds);
-
-      if (error) {
-        console.error('❌ Failed to load accessories:', error.message);
-      } else {
-        setAccessoryData(data);
-      }
+      if (!error) setAccessoryData(data);
     };
-
     loadAccessories();
   }, [accessoryIds]);
 
@@ -62,7 +57,6 @@ const MockPayment = () => {
     }
 
     const userId = user.id;
-    // Get cycle data and check if it's available
     const { data: cycle, error: cycleError } = await supabase
       .from('cycles')
       .select('location_id, price_per_day, name, available')
@@ -81,11 +75,11 @@ const MockPayment = () => {
       return;
     }
 
-    // Check if the cycle is already booked for the selected dates
     const { data: existingBookings, error: bookingsError } = await supabase
       .from('bookings')
       .select('start_time, end_time')
-      .eq('cycle_id', cycleId);
+      .eq('cycle_id', cycleId)
+      .in('status', ['confirmed', 'active']);
 
     if (bookingsError) {
       setError('❌ Failed to check existing bookings.');
@@ -108,7 +102,7 @@ const MockPayment = () => {
       return;
     }
 
-    // Step 1: insert the booking
+    // Step 1: insert booking in Supabase
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .insert([
@@ -125,7 +119,6 @@ const MockPayment = () => {
       .single();
 
     if (bookingError || !booking) {
-      console.error('❌ Booking failed:', bookingError.message);
       setError('❌ Something went wrong. Please try again.');
       setLoading(false);
       return;
@@ -135,7 +128,7 @@ const MockPayment = () => {
     if (accessoryIds.length > 0) {
       const accessoryInserts = accessoryIds.map((id) => ({
         booking_id: booking.id,
-        accessory_id: id.toString(),
+        accessory_id: id,
       }));
 
       const { error: accessoryInsertError } = await supabase
@@ -143,85 +136,69 @@ const MockPayment = () => {
         .insert(accessoryInserts);
 
       if (accessoryInsertError) {
-        console.error(
-          '❌ Failed to add accessories:',
-          accessoryInsertError.message
-        );
         setError('❌ Booking created, but failed to add accessories.');
         setLoading(false);
         return;
       }
     }
 
-    navigate('/booking-summary', {
-      state: {
-        cycleName: cycle.name,
-        startDate,
-        endDate,
-        total: calculateTotal(
-          startDate,
-          endDate,
-          cycle.price_per_day,
-          accessoryData
-        ),
-        accessories: accessoryData, // ✅ Add this line
-      },
-    });
+    // Step 3: create Stripe Checkout session
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          price: calculateTotal(
+            startDate,
+            endDate,
+            cycle.price_per_day,
+            accessoryData
+          ),
+          cycleName: cycle.name,
+          success_url: `${window.location.origin}/booking-summary`,
+          cancel_url: `${window.location.origin}/cancelled`,
+        }),
+      });
+
+      const session = await response.json();
+
+      if (session.id) {
+        window.location.href = session.url;
+      } else {
+        setError('❌ Failed to start payment session.');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Payment error:', err.message);
+      setError('❌ Error contacting payment server.');
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-base-200 pt-28 px-6 pb-10">
       <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
-        <h1 className="text-2xl font-bold mb-4 text-primary">Payment</h1>
-        <p className="mb-4">Enter your card details to complete the booking:</p>
+        <h1 className="text-2xl font-bold mb-4 text-primary">Secure Payment</h1>
+        <p className="mb-4">
+          You'll be redirected to Stripe for a test payment.
+        </p>
 
         {error && (
           <div className="bg-red-100 text-error text-sm p-3 rounded mb-4">
             {error}
-            <button
-              onClick={() => navigate('/')}
-              className="btn btn-outline btn-sm mt-3"
-            >
-              🔍 Return to Search
-            </button>
           </div>
         )}
 
         {loading && (
-          <div className="text-sm text-info mb-4">Processing payment...</div>
+          <div className="text-sm text-info mb-4">Redirecting to Stripe...</div>
         )}
-
-        <div className="grid gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Card Number"
-            className="input input-bordered w-full"
-          />
-          <input
-            type="text"
-            placeholder="Name on Card"
-            className="input input-bordered w-full"
-          />
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="MM/YY"
-              className="input input-bordered w-full"
-            />
-            <input
-              type="text"
-              placeholder="CVV"
-              className="input input-bordered w-full"
-            />
-          </div>
-        </div>
 
         <button
           onClick={handlePayment}
           className="btn btn-primary w-full"
           disabled={loading}
         >
-          {loading ? 'Processing...' : 'Pay Now'}
+          {loading ? 'Processing...' : 'Pay with Stripe'}
         </button>
       </div>
     </div>

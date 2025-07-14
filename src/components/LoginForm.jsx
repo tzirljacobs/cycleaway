@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react'; // 👁️ icon imports
+import { Eye, EyeOff } from 'lucide-react';
 import supabase from '../supabaseClient';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // 👁️ toggle state
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -51,16 +51,22 @@ function LoginForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-base-100 shadow-lg rounded-lg">
-      <h2 className="text-2xl font-bold mb-4">Log In</h2>
+    <div className="max-w-md mx-auto p-6 bg-base-100 shadow-lg rounded-lg mt-28">
+      <h2 className="text-2xl font-bold mb-4 text-center text-primary">
+        Log In
+      </h2>
 
       {error && (
-        <div className="text-error bg-red-100 p-2 rounded mb-2 text-sm">
-          {error}
+        <div className="alert alert-error mb-4 py-2 text-sm shadow">
+          ❌ {error}
         </div>
       )}
 
-      {loading && <div className="text-info text-sm mb-2">Logging in...</div>}
+      {loading && (
+        <div className="alert alert-info mb-4 py-2 text-sm shadow">
+          Logging in...
+        </div>
+      )}
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
@@ -95,10 +101,24 @@ function LoginForm() {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary w-full">
-          Log In
+        <button
+          type="submit"
+          className="btn btn-primary w-full"
+          disabled={loading}
+        >
+          {loading ? 'Logging in...' : 'Log In'}
         </button>
       </form>
+
+      <div className="text-sm text-center mt-4 text-gray-500">
+        Don’t have an account?{' '}
+        <button
+          className="text-primary hover:underline"
+          onClick={() => navigate('/signup')}
+        >
+          Sign Up
+        </button>
+      </div>
     </div>
   );
 }

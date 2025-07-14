@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import '/src/printStyles.css';
-
 import { useNavigate } from 'react-router-dom';
 import supabase from '../supabaseClient';
 
@@ -11,7 +10,6 @@ const ManageBookings = () => {
   const [message, setMessage] = useState('');
   const [locations, setLocations] = useState([]);
 
-  // ✅ Filter & Sort State
   const [selectedLocationFilter, setSelectedLocationFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('desc');
 
@@ -34,13 +32,9 @@ const ManageBookings = () => {
       .from('bookings')
       .select(
         `
-        id,
-        start_time,
-        end_time,
-        status,
+        id, start_time, end_time, status,
         user:user_id(name, email),
-       cycle:cycle_id(name, location_id, available),
-
+        cycle:cycle_id(name, location_id, available),
         accessories:booking_accessories(accessory_id, accessory:accessory_id(name, price))
       `
       )
@@ -57,11 +51,7 @@ const ManageBookings = () => {
 
   const fetchAllLocations = async () => {
     const { data, error } = await supabase.from('locations').select('id, name');
-    if (error) {
-      console.error('❌ Could not load locations.', error);
-    } else {
-      setLocations(data);
-    }
+    if (!error) setLocations(data);
   };
 
   const updateBooking = async (id, updates) => {
@@ -72,63 +62,80 @@ const ManageBookings = () => {
       .select()
       .single();
 
-    if (error) {
-      setError('❌ Failed to update booking.');
-      console.error(error);
-    } else {
+    if (!error) {
       setMessage('✅ Booking updated.');
       setBookings((prev) =>
         prev.map((b) => (b.id === id ? { ...b, ...updates } : b))
       );
+      setTimeout(() => setMessage(''), 3000);
+    } else {
+      setError('❌ Failed to update booking.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-base-200 pt-28 px-6 pb-10">
+    <div className="bg-base-200 pt-28 print:pt-4 px-4 pb-10">
       <div className="max-w-6xl mx-auto mb-4 flex flex-wrap gap-2">
         <button
           onClick={() => navigate('/employee-dashboard')}
-          className="btn btn-secondary"
+          className="btn btn-secondary w-full sm:w-auto"
         >
           ⬅️ Back to Dashboard
         </button>
-        <button onClick={() => navigate('/')} className="btn btn-primary">
+        <button
+          onClick={() => navigate('/')}
+          className="btn btn-primary w-full sm:w-auto"
+        >
           ➕ New Booking
         </button>
       </div>
 
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow">
-        <h1 className="text-3xl font-bold text-primary mb-4">All Bookings</h1>
-        <button
-          className="btn btn-outline btn-primary mb-4"
-          onClick={() => window.print()}
-        >
-          🖨️ Print Bookings
-        </button>
+        {/* ✅ Print-only logo and heading */}
+        <div className="hidden print:block text-center mb-6">
+          <img
+            src="/logo.png"
+            alt="CycleAway Logo"
+            className="w-28 mx-auto mb-2"
+          />
+          <h2 className="text-xl font-semibold">CycleAway Bicycle Rentals</h2>
+        </div>
 
-        {/* ✅ Filter + Sort UI */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <select
-            className="select select-bordered"
-            value={selectedLocationFilter}
-            onChange={(e) => setSelectedLocationFilter(e.target.value)}
-          >
-            <option value="">All Locations</option>
-            {locations.map((loc) => (
-              <option key={loc.id} value={loc.id}>
-                {loc.name}
-              </option>
-            ))}
-          </select>
+        <h1 className="text-3xl font-bold text-primary text-center mb-6">
+          All Bookings
+        </h1>
 
-          <select
-            className="select select-bordered"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
+        <div className="flex flex-wrap gap-2 justify-between items-center mb-6">
+          <div className="flex flex-wrap gap-4 w-full md:w-auto">
+            <select
+              className="select select-bordered"
+              value={selectedLocationFilter}
+              onChange={(e) => setSelectedLocationFilter(e.target.value)}
+            >
+              <option value="">All Locations</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="select select-bordered"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+            >
+              <option value="desc">Start Date ↓</option>
+              <option value="asc">Start Date ↑</option>
+            </select>
+          </div>
+
+          <button
+            className="btn btn-outline btn-primary w-full md:w-auto mt-2 md:mt-0"
+            onClick={() => window.print()}
           >
-            <option value="desc">Start Date ↓ (Latest first)</option>
-            <option value="asc">Start Date ↑ (Earliest first)</option>
-          </select>
+            🖨️ Print Bookings
+          </button>
         </div>
 
         {loading && <p className="text-info">Loading bookings...</p>}
@@ -141,14 +148,14 @@ const ManageBookings = () => {
 
         {!loading && bookings.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="table table-zebra w-full">
+            <table className="table table-zebra w-full text-sm sm:text-base">
               <thead>
                 <tr>
                   <th>Cycle</th>
                   <th>Customer</th>
                   <th>Location</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
+                  <th>Start</th>
+                  <th>End</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -171,16 +178,15 @@ const ManageBookings = () => {
                         <div className="font-semibold">
                           {b.cycle?.name || 'Unknown'}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-500">
                           {b.cycle?.available
                             ? '✅ Available'
                             : '🚫 Out of Service'}
                         </div>
-
                         {b.accessories?.length > 0 ? (
                           <ul className="text-sm text-gray-500 mt-1 space-y-1">
-                            {b.accessories.map((a, i) => (
-                              <li key={i}>
+                            {b.accessories.map((a) => (
+                              <li key={`${b.id}-${a.accessory_id}`}>
                                 🧰 {a.accessory?.name} (£{a.accessory?.price})
                               </li>
                             ))}
@@ -205,10 +211,7 @@ const ManageBookings = () => {
                               .update({ location_id: newLoc })
                               .eq('id', b.id);
 
-                            if (error) {
-                              console.error(error);
-                              setError('❌ Failed to update location.');
-                            } else {
+                            if (!error) {
                               setBookings((prev) =>
                                 prev.map((bk) =>
                                   bk.id === b.id
@@ -224,6 +227,8 @@ const ManageBookings = () => {
                               );
                               setMessage('✅ Location updated.');
                               setTimeout(() => setMessage(''), 3000);
+                            } else {
+                              setError('❌ Failed to update location.');
                             }
                           }}
                           disabled={
@@ -267,11 +272,11 @@ const ManageBookings = () => {
                       </td>
 
                       <td className="capitalize">{b.status}</td>
-                      <td className="space-x-2">
+                      <td className="space-y-2">
                         {b.status === 'confirmed' && (
                           <>
                             <button
-                              className="btn btn-sm btn-success"
+                              className="btn btn-sm btn-success mb-1 w-full"
                               onClick={() =>
                                 updateBooking(b.id, { status: 'active' })
                               }
@@ -279,7 +284,7 @@ const ManageBookings = () => {
                               Start
                             </button>
                             <button
-                              className="btn btn-sm btn-error"
+                              className="btn btn-sm btn-error w-full"
                               onClick={() =>
                                 updateBooking(b.id, { status: 'cancelled' })
                               }
@@ -288,10 +293,9 @@ const ManageBookings = () => {
                             </button>
                           </>
                         )}
-
                         {b.status === 'active' && (
                           <button
-                            className="btn btn-sm btn-warning"
+                            className="btn btn-sm btn-warning w-full"
                             onClick={() =>
                               updateBooking(b.id, { status: 'complete' })
                             }

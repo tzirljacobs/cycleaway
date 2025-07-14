@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom'; // ✅ useNavigate added
+import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../supabaseClient';
 
 const SearchResults = () => {
   const [cycles, setCycles] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
   const location = useLocation();
-  const navigate = useNavigate(); // ✅ initialize navigate
+  const navigate = useNavigate();
 
   const params = new URLSearchParams(location.search);
   const selectedLocation = params.get('location');
@@ -15,40 +20,69 @@ const SearchResults = () => {
 
   useEffect(() => {
     const fetchCyclesAndBookings = async () => {
-      let cycleQuery = supabase
-        .from('cycles')
-        .select('*')
-        .eq('available', true);
-
-      if (selectedLocation) {
-        cycleQuery = cycleQuery.eq('location_id', selectedLocation);
-      }
-
-      if (selectedCategory) {
-        cycleQuery = cycleQuery.eq('category_id', selectedCategory);
-      }
-
-      const { data: cyclesData, error: cyclesError } = await cycleQuery;
-      const { data: bookingsData, error: bookingsError } = await supabase
+      const { data: bookingsData } = await supabase
         .from('bookings')
         .select('*');
-
-      if (!cyclesError && !bookingsError) {
-        console.log('✅ Raw Cycles:', cyclesData);
-        console.log('📅 Bookings:', bookingsData);
-        setCycles(
-          cyclesData.map((cycle) => ({
-            ...cycle,
-            bookings: bookingsData.filter((b) => b.cycle_id === cycle.id),
-          }))
-        );
-      } else {
-        console.error('❌ Error loading data:', cyclesError || bookingsError);
-      }
+      setBookings(bookingsData || []);
+      setCycles([]); // reset on filter change
+      setPage(1);
+      setHasMore(true);
+      await loadMore();
     };
 
     fetchCyclesAndBookings();
   }, [selectedLocation, selectedCategory, startDate, endDate]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+
+    let query = supabase
+      .from('cycles')
+      .select('*')
+      .eq('available', true)
+      .range((page - 1) * 6, page * 6 - 1);
+
+    if (selectedLocation) query = query.eq('location_id', selectedLocation);
+    if (selectedCategory) query = query.eq('category_id', selectedCategory);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(error.message);
+      setHasMore(false);
+    } else {
+      if (data.length === 0) setHasMore(false);
+      setCycles((prev) => [
+        ...prev,
+        ...data.map((cycle) => ({
+          ...cycle,
+          bookings: bookings.filter(
+            (b) =>
+              b.cycle_id === cycle.id &&
+              (b.status === 'confirmed' || b.status === 'active')
+          ),
+        })),
+      ]);
+      setPage((prev) => prev + 1);
+    }
+
+    setLoadingMore(false);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 100
+      ) {
+        loadMore();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [cycles, hasMore]);
 
   return (
     <div className="min-h-screen bg-base-200 pt-28 px-6 pb-6">
@@ -93,7 +127,7 @@ const SearchResults = () => {
                 return (
                   <div
                     key={cycle.id}
-                    className="bg-white rounded-xl shadow overflow-hidden"
+                    className="bg-white rounded-xl shadow overflow-hidden flex flex-col h-full"
                   >
                     {cycle.image_url && (
                       <img
@@ -102,11 +136,13 @@ const SearchResults = () => {
                         className="w-full h-48 object-cover"
                       />
                     )}
-                    <div className="p-4">
+                    <div className="p-4 flex flex-col flex-grow">
                       <h2 className="text-xl font-semibold mb-2">
                         {cycle.name}
                       </h2>
-                      <p className="text-gray-600">{cycle.description}</p>
+                      <p className="text-gray-600 flex-grow">
+                        {cycle.description}
+                      </p>
                       <p className="mt-2 text-primary font-bold">
                         £{cycle.price_per_day}/day
                       </p>
@@ -142,6 +178,12 @@ const SearchResults = () => {
               })
           )}
         </div>
+
+        {loadingMore && (
+          <div className="text-center mt-6 text-sm text-gray-500">
+            Loading more...
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,40 @@
+// api/create-checkout-session.js
+
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+/**
+ * Vercel serverless function to create a Stripe Checkout session.
+ */
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).send({ error: 'Only POST requests allowed' });
+  }
+
+  const { price, cycleName, success_url, cancel_url } = req.body;
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'gbp',
+            product_data: {
+              name: cycleName || 'Cycle Rental',
+            },
+            unit_amount: Math.round(price * 100), // price in pennies
+          },
+          quantity: 1,
+        },
+      ],
+      success_url,
+      cancel_url,
+    });
+
+    res.status(200).json({ id: session.id });
+  } catch (err) {
+    console.error('Stripe session creation error:', err.message);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+};

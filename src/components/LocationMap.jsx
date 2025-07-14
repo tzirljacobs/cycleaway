@@ -4,6 +4,7 @@ import supabase from '../supabaseClient';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
+// Fix marker icons for Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: new URL(
@@ -26,19 +27,18 @@ const LocationMap = () => {
     fetchLocations();
   }, []);
 
-  console.log('📦 Locations fetched from Supabase:', locations);
-  if (locations.length > 0) {
-    console.log('🖼️ First location data:', locations[0]);
-  }
-
   const ensureCrop = (url) => {
     if (!url) return null;
     return url.includes('fit=crop') ? url : `${url}&fit=crop`;
   };
 
   return (
-    <div className="max-w-5xl mx-auto my-10">
-      <h2 className="text-2xl font-bold mb-4 text-center">📍 Our Locations</h2>
+    <div className="max-w-5xl mx-auto my-10 px-4 mb-16">
+      <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-primary">
+        📍 Our Locations
+      </h2>
+
+      {/* Map */}
       <MapContainer
         center={[51.505, -0.09]}
         zoom={5}
@@ -53,7 +53,6 @@ const LocationMap = () => {
           .filter((loc) => loc.latitude && loc.longitude)
           .map((loc) => {
             const croppedUrl = ensureCrop(loc.photo_url);
-            console.log(`📍 ${loc.name} image:`, croppedUrl);
             return (
               <Marker key={loc.id} position={[loc.latitude, loc.longitude]}>
                 <Popup>
@@ -81,28 +80,32 @@ const LocationMap = () => {
       </MapContainer>
 
       {/* Location Cards */}
-      <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {locations.map((loc) => {
           const croppedUrl = ensureCrop(loc.photo_url);
           return (
             <div
               key={loc.id}
-              className="bg-white shadow rounded-xl overflow-hidden"
+              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
             >
               {croppedUrl ? (
                 <img
                   src={croppedUrl}
                   alt={loc.name}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-48 object-cover rounded-t-xl"
                 />
               ) : (
-                <div className="w-full h-48 bg-base-200 flex items-center justify-center text-sm text-gray-500">
+                <div className="w-full h-48 bg-base-200 flex items-center justify-center text-sm text-gray-500 rounded-t-xl">
                   No image available
                 </div>
               )}
               <div className="p-4">
-                <h3 className="text-lg font-semibold">{loc.name}</h3>
-                <p className="text-sm text-gray-600">{loc.address}</p>
+                <h3 className="text-base sm:text-lg font-semibold text-primary mb-1">
+                  {loc.name}
+                </h3>
+                <p className="text-sm sm:text-base text-gray-600">
+                  {loc.address}
+                </p>
               </div>
             </div>
           );

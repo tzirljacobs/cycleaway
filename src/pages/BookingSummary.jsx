@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import '../printStyles.css';
-
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const BookingSummary = () => {
@@ -14,7 +13,6 @@ const BookingSummary = () => {
   const total = state?.total;
   const accessories = state?.accessories || [];
 
-  // Set the success message and remove it after 3 seconds
   useEffect(() => {
     setMessage('✅ Booking confirmed successfully!');
     const timer = setTimeout(() => setMessage(''), 3000);
@@ -22,23 +20,23 @@ const BookingSummary = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-base-200 pt-28 px-6 pb-10">
+    <div className="min-h-screen bg-base-200 pt-28 px-4 sm:px-6 pb-10">
       <div className="max-w-xl mx-auto">
-        {/* ✅ Green success alert */}
         {message && (
-          <div className="alert alert-success shadow-lg mb-6">
+          <div className="alert alert-success shadow-lg mb-6 text-sm sm:text-base">
             <span>{message}</span>
           </div>
         )}
 
-        {/* 🧾 Booking summary card */}
-        <div className="bg-white p-6 rounded-xl shadow text-center">
-          <h1 className="text-3xl font-bold text-success mb-4">
+        <div className="bg-white p-6 rounded-xl shadow-md sm:shadow-lg text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-success mb-4">
             ✅ Booking Confirmed!
           </h1>
-          <p className="mb-2">Thank you for booking with CycleAway.</p>
+          <p className="mb-2 text-sm sm:text-base">
+            Thank you for booking with CycleAway.
+          </p>
 
-          <div className="bg-base-100 rounded-lg p-4 text-left my-4">
+          <div className="bg-base-100 rounded-lg p-4 text-left my-4 text-sm sm:text-base">
             <p>
               <strong>Cycle:</strong> {cycleName}
             </p>
@@ -48,29 +46,16 @@ const BookingSummary = () => {
                 ? new Date(startDate).toLocaleString()
                 : 'Not available'}
             </p>
-
             <p>
               <strong>End Date:</strong>{' '}
               {endDate ? new Date(endDate).toLocaleString() : 'Not available'}
             </p>
-            {accessories.length > 0 && (
-              <div className="mt-2">
-                <strong>Accessories:</strong>
-                <ul className="list-disc list-inside ml-2 text-sm text-gray-700">
-                  {accessories.map((a) => (
-                    <li key={a.id}>
-                      {a.name} – £{a.price}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
-            {state?.accessories?.length > 0 && (
+            {accessories.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold mb-1">Included Accessories:</p>
-                <ul className="list-disc list-inside text-sm text-gray-600">
-                  {state.accessories.map((a, i) => (
+                <ul className="list-disc list-inside text-sm text-gray-700">
+                  {accessories.map((a, i) => (
                     <li key={i}>
                       🧰 {a.name} (£{a.price})
                     </li>
@@ -79,24 +64,23 @@ const BookingSummary = () => {
               </div>
             )}
 
-            <p className="font-bold text-primary mt-2">
+            <p className="font-bold text-primary mt-4">
               Total Paid: £{total ?? '—'}
             </p>
           </div>
 
-          {/* 🏠 Manual return to homepage button */}
-          <button
-            className="btn btn-primary mt-4"
-            onClick={() => navigate('/')}
-          >
-            Return to Home
-          </button>
-          <button
-            className="btn btn-secondary mt-2 ml-2"
-            onClick={() => window.print()}
-          >
-            🖨️ Print or Save as PDF
-          </button>
+          {/* Responsive Buttons */}
+          <div className="flex flex-col sm:flex-row sm:justify-center gap-3 mt-4">
+            <button className="btn btn-primary" onClick={() => navigate('/')}>
+              Return to Home
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => window.print()}
+            >
+              🖨️ Print or Save as PDF
+            </button>
+          </div>
         </div>
       </div>
     </div>

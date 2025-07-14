@@ -4,6 +4,7 @@ import supabase from '../supabaseClient';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: new URL(
@@ -21,74 +22,58 @@ const ManageLocations = () => {
   const [locations, setLocations] = useState([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
   const [photoUrl, setPhotoUrl] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
+  const [page, setPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  const handleAddressSearch = async (e) => {
-    const query = e.target.value;
-    setAddress(query);
-
-    if (query.length < 3) {
-      setSuggestions([]);
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-          query
-        )}&format=json&addressdetails=1&limit=5`
-      );
-      const data = await res.json();
-      setSuggestions(data);
-    } catch (err) {
-      console.error('Error fetching address suggestions:', err);
-      setSuggestions([]);
-    }
-  };
-
-  const handleAddressSelect = (selection) => {
-    setAddress(selection.display_name);
-    setLatitude(parseFloat(selection.lat));
-    setLongitude(parseFloat(selection.lon));
-    setSuggestions([]);
-  };
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchLocations();
+    loadMoreLocations(true);
   }, []);
 
-  const fetchLocations = async () => {
-    const { data, error } = await supabase.from('locations').select('*');
-    if (!error) setLocations(data);
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 100
+      ) {
+        loadMoreLocations(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [locations, hasMore]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    setError('');
+  const loadMoreLocations = async (initial = false) => {
+    if (loadingMore || (!initial && !hasMore)) return;
+    setLoadingMore(true);
+
+    const start = initial ? 0 : page * 6;
+    const end = start + 5;
+
     const { data, error } = await supabase
       .from('locations')
-      .insert([{ name, address, photo_url: photoUrl, latitude, longitude }])
+      .select('*')
+      .range(start, end);
 
-      .select();
-    if (error) {
-      console.error(error);
-      setError('❌ Error adding location.');
-    } else {
-      setLocations((prev) => [...prev, ...data]);
-      setName('');
-      setAddress('');
-      setPhotoUrl(''); // ← add this here
-      setLatitude(null); // optional: reset coordinates too
-      setLongitude(null);
-      setMessage('✅ Location added!');
-
-      setTimeout(() => setMessage(''), 3000);
+    if (!error) {
+      if (data.length === 0) setHasMore(false);
+      setLocations((prev) => {
+        const all = initial ? data : [...prev, ...data];
+        const unique = Array.from(
+          new Map(all.map((item) => [item.id, item])).values()
+        );
+        return unique;
+      });
+      if (!initial) setPage((prev) => prev + 1);
     }
+
+    setLoadingMore(false);
   };
 
   const handleDelete = async (id) => {
@@ -122,9 +107,63 @@ const ManageLocations = () => {
     }
   };
 
+  const handleAddressSearch = async (e) => {
+    const query = e.target.value;
+    setAddress(query);
+
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          query
+        )}&format=json&addressdetails=1&limit=5`
+      );
+      const data = await res.json();
+      setSuggestions(data);
+    } catch (err) {
+      console.error('Error fetching address suggestions:', err);
+      setSuggestions([]);
+    }
+  };
+
+  const handleAddressSelect = (selection) => {
+    setAddress(selection.display_name);
+    setLatitude(parseFloat(selection.lat));
+    setLongitude(parseFloat(selection.lon));
+    setSuggestions([]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setError('');
+
+    const { data, error } = await supabase
+      .from('locations')
+      .insert([{ name, address, photo_url: photoUrl, latitude, longitude }])
+      .select();
+
+    if (error) {
+      console.error(error);
+      setError('❌ Error adding location.');
+    } else {
+      setLocations((prev) => [...data, ...prev]);
+      setName('');
+      setAddress('');
+      setPhotoUrl('');
+      setLatitude(null);
+      setLongitude(null);
+      setMessage('✅ Location added!');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base-200 pt-28 px-4 pb-10">
-      {/* Back Button */}
       <div className="max-w-3xl mx-auto mb-4">
         <button
           onClick={() => navigate('/employee-dashboard')}
@@ -134,7 +173,6 @@ const ManageLocations = () => {
         </button>
       </div>
 
-      {/* Success/Error Messages */}
       {message && (
         <div className="max-w-3xl mx-auto mb-6">
           <div className="alert alert-success shadow-lg">
@@ -150,7 +188,6 @@ const ManageLocations = () => {
         </div>
       )}
 
-      {/* Add Location Form */}
       <div className="max-w-3xl mx-auto mb-10 bg-white p-6 rounded-xl shadow">
         <h2 className="text-2xl font-bold mb-6 text-center">
           Add a New Location
@@ -181,7 +218,6 @@ const ManageLocations = () => {
               </li>
             ))}
           </ul>
-
           <input
             type="text"
             placeholder="Photo URL (optional)"
@@ -190,7 +226,7 @@ const ManageLocations = () => {
             onChange={(e) => setPhotoUrl(e.target.value)}
           />
           <MapContainer
-            center={[51.505, -0.09]} // Default center (London)
+            center={[51.505, -0.09]}
             zoom={13}
             style={{ height: '300px', width: '100%' }}
             className="rounded-lg"
@@ -212,7 +248,6 @@ const ManageLocations = () => {
         </form>
       </div>
 
-      {/* Existing Locations */}
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
         <h3 className="text-xl font-bold mb-4 text-center">
           Existing Locations
@@ -220,29 +255,28 @@ const ManageLocations = () => {
         {locations.length === 0 ? (
           <p className="text-center">No locations yet.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
             {locations.map((loc) => (
               <li
                 key={loc.id}
-                className="border rounded p-4 flex justify-between items-center"
+                className="border rounded p-4 flex flex-col sm:flex-row justify-between items-center gap-4"
               >
-                <div>
-                  <div className="flex items-center gap-4">
-                    {loc.photo_url && (
-                      <img
-                        src={loc.photo_url}
-                        alt={loc.name}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    )}
-                    <div>
-                      <strong>{loc.name}</strong> – {loc.address}
-                    </div>
+                <div className="flex items-center gap-4 w-full">
+                  {loc.photo_url && (
+                    <img
+                      src={loc.photo_url}
+                      alt={loc.name}
+                      className="w-20 h-20 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <div className="font-semibold">{loc.name}</div>
+                    <div className="text-sm text-gray-600">{loc.address}</div>
                   </div>
                 </div>
                 <button
                   onClick={() => handleDelete(loc.id)}
-                  className="btn btn-sm btn-error"
+                  className="btn btn-sm btn-error w-full sm:w-auto"
                 >
                   Delete
                 </button>
@@ -250,14 +284,20 @@ const ManageLocations = () => {
             ))}
           </ul>
         )}
+        {loadingMore && (
+          <p className="text-sm text-gray-400 text-center mt-4">
+            Loading more locations...
+          </p>
+        )}
       </div>
     </div>
   );
 };
+
 function LocationMarker({ setMessage, setLatitude, setLongitude }) {
   const [position, setPosition] = useState(null);
 
-  const map = useMapEvents({
+  useMapEvents({
     click(e) {
       setPosition(e.latlng);
       setLatitude(e.latlng.lat);

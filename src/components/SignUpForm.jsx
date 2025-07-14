@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../supabaseClient';
 import { Eye, EyeOff } from 'lucide-react';
+import AddressInput from '../components/AddressInput'; // ✅ Step 1
 
 function SignUpForm() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,8 @@ function SignUpForm() {
   const [role, setRole] = useState('customer');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState(null); // ✅ Step 2
+  const [longitude, setLongitude] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,6 +45,8 @@ function SignUpForm() {
           email,
           phone,
           address,
+          latitude, // ✅ saved if you want to use in future
+          longitude,
         },
       ]);
 
@@ -92,11 +97,11 @@ function SignUpForm() {
         </div>
         <div>
           <label className="label">Address</label>
-          <input
-            type="text"
-            className="input input-bordered w-full"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
+          <AddressInput
+            address={address}
+            setAddress={setAddress}
+            setLatitude={setLatitude}
+            setLongitude={setLongitude}
           />
         </div>
         <div>

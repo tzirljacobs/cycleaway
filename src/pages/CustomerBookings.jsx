@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import '/src/printStyles.css';
 import supabase from '../supabaseClient';
-import '../printStyles.css';
 
 const CustomerBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -20,8 +20,8 @@ const CustomerBookings = () => {
 
     const { data: sessionData, error: sessionError } =
       await supabase.auth.getSession();
-
     const userId = sessionData?.session?.user?.id;
+
     if (!userId || sessionError) {
       setError('You must be logged in to view your bookings.');
       setLoading(false);
@@ -46,12 +46,8 @@ const CustomerBookings = () => {
       supabase.from('locations').select('id, name'),
     ]);
 
-    if (bookingRes.error) {
-      setError('Failed to load bookings.');
-    }
-    if (locationRes.error) {
-      setError('Failed to load locations.');
-    }
+    if (bookingRes.error) setError('Failed to load bookings.');
+    if (locationRes.error) setError('Failed to load locations.');
 
     if (!bookingRes.error && !locationRes.error) {
       setBookings(bookingRes.data);
@@ -60,6 +56,7 @@ const CustomerBookings = () => {
 
     setLoading(false);
   };
+
   const isOverlappingBooking = (
     cycleId,
     newStart,
@@ -111,27 +108,47 @@ const CustomerBookings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 pt-28 px-6 pb-10">
-      <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow">
-        <h1 className="text-3xl font-bold text-primary mb-4">Your Bookings</h1>
+    <div className="min-h-screen bg-base-200 pt-28 print:pt-4 px-4 sm:px-6 pb-10">
+      <div className="max-w-6xl mx-auto bg-white p-4 sm:p-6 rounded-xl shadow">
+        {/* ✅ Print-only logo and heading */}
+        <div className="hidden print:block text-center mb-6">
+          <img
+            src="/logo.png"
+            alt="CycleAway Logo"
+            className="w-28 mx-auto mb-2"
+          />
+          <h2 className="text-xl font-semibold">CycleAway Bicycle Rentals</h2>
+        </div>
+
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-4">
+          Your Bookings
+        </h1>
         <button
-          className="btn btn-outline btn-primary mb-4"
+          className="btn btn-outline btn-primary mb-4 text-sm sm:text-base"
           onClick={() => window.print()}
         >
           🖨️ Print Bookings
         </button>
 
-        {loading && <p className="text-info">Loading bookings...</p>}
-        {error && <p className="text-error mb-2">{error}</p>}
-        {message && <p className="text-success mb-2">{message}</p>}
+        {loading && (
+          <p className="text-info text-sm sm:text-base">Loading bookings...</p>
+        )}
+        {error && (
+          <p className="text-error mb-2 text-sm sm:text-base">{error}</p>
+        )}
+        {message && (
+          <p className="text-success mb-2 text-sm sm:text-base">{message}</p>
+        )}
 
         {!loading && bookings.length === 0 && (
-          <p className="text-gray-600">No bookings found.</p>
+          <p className="text-gray-600 text-sm sm:text-base">
+            No bookings found.
+          </p>
         )}
 
         {!loading && bookings.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="table table-zebra w-full">
+            <table className="table table-zebra w-full text-sm sm:text-base">
               <thead>
                 <tr>
                   <th>Cycle</th>
@@ -150,7 +167,7 @@ const CustomerBookings = () => {
                     <td>
                       <input
                         type="date"
-                        className="input input-sm input-bordered"
+                        className="input input-sm input-bordered w-full"
                         value={b.start_time?.slice(0, 10)}
                         disabled={b.status !== 'confirmed'}
                         onChange={(e) =>
@@ -161,7 +178,7 @@ const CustomerBookings = () => {
                     <td>
                       <input
                         type="date"
-                        className="input input-sm input-bordered"
+                        className="input input-sm input-bordered w-full"
                         value={b.end_time?.slice(0, 10)}
                         disabled={b.status !== 'confirmed'}
                         onChange={(e) =>
@@ -170,7 +187,7 @@ const CustomerBookings = () => {
                       />
                     </td>
                     <td className="capitalize">{b.status}</td>
-                    <td>
+                    <td className="flex flex-wrap gap-1">
                       {b.status === 'confirmed' && (
                         <>
                           <button
@@ -182,7 +199,7 @@ const CustomerBookings = () => {
                             Start
                           </button>
                           <button
-                            className="btn btn-sm btn-error ml-2"
+                            className="btn btn-sm btn-error"
                             onClick={() =>
                               updateBooking(b.id, { status: 'cancelled' })
                             }

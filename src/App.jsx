@@ -23,6 +23,7 @@ import Login from './auth/Login';
 import SignUp from './auth/SignUp';
 import './printStyles.css';
 import Profile from './pages/Profile';
+import './printStyles.css';
 
 function App() {
   useEffect(() => {

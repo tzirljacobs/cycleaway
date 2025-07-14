@@ -39,7 +39,7 @@ function SearchBar() {
   return (
     <section id="search" className="w-full px-4">
       <form
-        className="grid gap-4 md:grid-cols-4 bg-white bg-opacity-97 p-6 rounded-xl shadow-md"
+        className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 bg-white bg-opacity-95 p-4 sm:p-6 rounded-xl shadow-md"
         onSubmit={handleSubmit}
       >
         <div>
