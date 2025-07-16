@@ -129,13 +129,31 @@ const SearchResults = () => {
                     key={cycle.id}
                     className="bg-white rounded-xl shadow overflow-hidden flex flex-col h-full"
                   >
-                    {cycle.image_url && (
+                    {cycle.image_url && cycle.image_url.startsWith('http') ? (
                       <img
-                        src={cycle.image_url}
+                        src={
+                          cycle.image_url.includes('fit=crop')
+                            ? cycle.image_url
+                            : `${cycle.image_url}&fit=crop`
+                        }
                         alt={cycle.name}
                         className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                          const fallback = document.createElement('div');
+                          fallback.textContent = 'No image';
+                          fallback.className =
+                            'w-full h-48 bg-base-200 flex items-center justify-center text-sm text-gray-500';
+                          e.target.parentNode.replaceChild(fallback, e.target);
+                        }}
                       />
+                    ) : (
+                      <div className="w-full h-48 bg-base-200 flex items-center justify-center text-sm text-gray-500">
+                        No image
+                      </div>
                     )}
+
                     <div className="p-4 flex flex-col flex-grow">
                       <h2 className="text-xl font-semibold mb-2">
                         {cycle.name}

@@ -262,13 +262,31 @@ const ManageLocations = () => {
                 className="border rounded p-4 flex flex-col sm:flex-row justify-between items-center gap-4"
               >
                 <div className="flex items-center gap-4 w-full">
-                  {loc.photo_url && (
+                  {loc.photo_url && loc.photo_url.startsWith('http') ? (
                     <img
-                      src={loc.photo_url}
+                      src={
+                        loc.photo_url.includes('fit=crop')
+                          ? loc.photo_url
+                          : `${loc.photo_url}&fit=crop`
+                      }
                       alt={loc.name}
                       className="w-20 h-20 object-cover rounded"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        const fallback = document.createElement('div');
+                        fallback.textContent = 'No image';
+                        fallback.className =
+                          'w-20 h-20 bg-base-200 flex items-center justify-center text-xs text-gray-500 rounded';
+                        e.target.parentNode.replaceChild(fallback, e.target);
+                      }}
                     />
+                  ) : (
+                    <div className="w-20 h-20 bg-base-200 flex items-center justify-center text-xs text-gray-500 rounded">
+                      No image
+                    </div>
                   )}
+
                   <div className="flex-1">
                     <div className="font-semibold">{loc.name}</div>
                     <div className="text-sm text-gray-600">{loc.address}</div>

@@ -238,15 +238,29 @@ const ManageCycles = () => {
               >
                 {cycle.image_url && cycle.image_url.startsWith('http') ? (
                   <img
-                    src={cycle.image_url}
+                    src={
+                      cycle.image_url.includes('fit=crop')
+                        ? cycle.image_url
+                        : `${cycle.image_url}&fit=crop`
+                    }
                     alt={cycle.name}
                     className="w-32 h-32 object-cover rounded"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.style.display = 'none';
+                      const fallback = document.createElement('div');
+                      fallback.textContent = 'No image';
+                      fallback.className =
+                        'w-32 h-32 bg-base-200 flex items-center justify-center text-xs text-gray-500 rounded';
+                      e.target.parentNode.replaceChild(fallback, e.target);
+                    }}
                   />
                 ) : (
                   <div className="w-32 h-32 bg-base-200 flex items-center justify-center text-xs text-gray-500 rounded">
                     No image
                   </div>
                 )}
+
                 <div className="flex-1">
                   <strong>{cycle.name}</strong>
                   <p className="text-sm text-gray-500">

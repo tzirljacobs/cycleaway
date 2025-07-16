@@ -59,12 +59,19 @@ function FeaturedCycles() {
             <SwiperSlide key={cycle.id}>
               <div className="card bg-base-100 shadow-lg hover:shadow-xl transition duration-200 h-full">
                 <figure>
-                  <img
-                    src={cycle.image_url}
-                    alt={cycle.name}
-                    className="w-full h-48 object-cover"
-                  />
+                  {cycle.image_url ? (
+                    <img
+                      src={cycle.image_url}
+                      alt={cycle.name}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                      No image available
+                    </div>
+                  )}
                 </figure>
+
                 <div className="card-body flex flex-col justify-between">
                   <div>
                     <h3 className="card-title text-lg sm:text-xl">

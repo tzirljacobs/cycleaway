@@ -134,13 +134,18 @@ const CycleDetail = () => {
   return (
     <div className="min-h-screen bg-base-200 pt-28 px-6 pb-10">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow overflow-hidden">
-        {cycle.image_url && (
+        {cycle.image_url ? (
           <img
             src={cycle.image_url}
             alt={cycle.name}
             className="w-full h-64 object-cover"
           />
+        ) : (
+          <div className="w-full h-64 bg-base-200 flex items-center justify-center text-sm text-gray-500">
+            No image available
+          </div>
         )}
+
         <div className="p-6">
           <h1 className="text-3xl font-bold text-primary mb-4">{cycle.name}</h1>
           <p className="text-gray-700 mb-4">{cycle.description}</p>
