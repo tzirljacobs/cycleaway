@@ -37,8 +37,6 @@ function LoginForm() {
 
         if (profile?.role === 'employee') {
           navigate('/employee-dashboard');
-        } else if (profile?.role === 'customer') {
-          navigate('/customer-bookings');
         } else {
           navigate('/');
         }

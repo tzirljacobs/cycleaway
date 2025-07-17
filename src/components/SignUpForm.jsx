@@ -2,26 +2,45 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../supabaseClient';
 import { Eye, EyeOff } from 'lucide-react';
-import AddressInput from '../components/AddressInput'; // ✅ Step 1
+import AddressInput from '../components/AddressInput';
 
 function SignUpForm() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState('customer');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [latitude, setLatitude] = useState(null); // ✅ Step 2
+  const [role, setRole] = useState('customer');
+  const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
+
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const [agree, setAgree] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   const navigate = useNavigate();
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setSuccess('');
+
+    if (!agree) {
+      setError('You must agree to the terms and conditions.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -45,7 +64,7 @@ function SignUpForm() {
           email,
           phone,
           address,
-          latitude, // ✅ saved if you want to use in future
+          latitude,
           longitude,
         },
       ]);
@@ -56,7 +75,10 @@ function SignUpForm() {
         return;
       }
 
-      navigate('/');
+      setSuccess('✅ Account created successfully!');
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
     }
 
     setLoading(false);
@@ -65,6 +87,10 @@ function SignUpForm() {
   return (
     <div className="max-w-md mx-auto p-6 bg-base-100 shadow-lg rounded-lg">
       <h2 className="text-2xl font-bold mb-4">Sign Up</h2>
+
+      {error && <div className="text-error text-sm mb-2">❌ {error}</div>}
+      {success && <div className="text-success text-sm mb-2">{success}</div>}
+
       <form onSubmit={handleSignUp} className="space-y-4">
         <div>
           <label className="label">Name</label>
@@ -76,6 +102,7 @@ function SignUpForm() {
             required
           />
         </div>
+
         <div>
           <label className="label">Email</label>
           <input
@@ -86,6 +113,7 @@ function SignUpForm() {
             required
           />
         </div>
+
         <div>
           <label className="label">Phone</label>
           <input
@@ -95,6 +123,7 @@ function SignUpForm() {
             onChange={(e) => setPhone(e.target.value)}
           />
         </div>
+
         <div>
           <label className="label">Address</label>
           <AddressInput
@@ -104,6 +133,7 @@ function SignUpForm() {
             setLongitude={setLongitude}
           />
         </div>
+
         <div>
           <label className="label">Password</label>
           <div className="relative">
@@ -124,6 +154,18 @@ function SignUpForm() {
             </button>
           </div>
         </div>
+
+        <div>
+          <label className="label">Confirm Password</label>
+          <input
+            type="password"
+            className="input input-bordered w-full"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+
         <div>
           <label className="label">Role</label>
           <select
@@ -136,7 +178,26 @@ function SignUpForm() {
           </select>
         </div>
 
-        {error && <div className="text-error text-sm mt-2">❌ {error}</div>}
+        <div className="form-control">
+          <label className="cursor-pointer label flex gap-2">
+            <input
+              type="checkbox"
+              className="checkbox"
+              checked={agree}
+              onChange={(e) => setAgree(e.target.checked)}
+            />
+            <span className="label-text text-sm">
+              I agree to the{' '}
+              <a href="/terms" className="text-primary underline">
+                Terms of Use
+              </a>{' '}
+              and{' '}
+              <a href="/privacy" className="text-primary underline">
+                Privacy Policy
+              </a>
+            </span>
+          </label>
+        </div>
 
         <button
           type="submit"
