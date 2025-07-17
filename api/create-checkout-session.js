@@ -32,7 +32,8 @@ module.exports = async (req, res) => {
       cancel_url,
     });
 
-    res.status(200).json({ id: session.id });
+   res.status(200).json({ id: session.id, url: session.url });
+
   } catch (err) {
     console.error('Stripe session creation error:', err.message);
     res.status(500).json({ error: 'Failed to create checkout session' });
