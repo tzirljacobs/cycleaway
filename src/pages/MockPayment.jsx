@@ -1,5 +1,3 @@
-// src/pages/MockPayment.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import supabase from '../supabaseClient';
@@ -102,47 +100,7 @@ const MockPayment = () => {
       return;
     }
 
-    // Step 1: insert booking in Supabase
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .insert([
-        {
-          user_id: userId,
-          cycle_id: cycleId,
-          start_time: startDate,
-          end_time: endDate,
-          location_id: cycle.location_id,
-          status: 'confirmed',
-        },
-      ])
-      .select()
-      .single();
-
-    if (bookingError || !booking) {
-      setError('❌ Something went wrong. Please try again.');
-      setLoading(false);
-      return;
-    }
-
-    // Step 2: insert accessories (if any)
-    if (accessoryIds.length > 0) {
-      const accessoryInserts = accessoryIds.map((id) => ({
-        booking_id: booking.id,
-        accessory_id: id,
-      }));
-
-      const { error: accessoryInsertError } = await supabase
-        .from('booking_accessories')
-        .insert(accessoryInserts);
-
-      if (accessoryInsertError) {
-        setError('❌ Booking created, but failed to add accessories.');
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Step 3: create Stripe Checkout session
+    // Step 1: Create Stripe Checkout session (mocked)
     try {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -163,6 +121,47 @@ const MockPayment = () => {
       const session = await response.json();
 
       if (session.id) {
+        // Step 2: Insert booking AFTER we know session is valid
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .insert([
+            {
+              user_id: userId,
+              cycle_id: cycleId,
+              start_time: startDate,
+              end_time: endDate,
+              location_id: cycle.location_id,
+              status: 'confirmed',
+            },
+          ])
+          .select()
+          .single();
+
+        if (bookingError || !booking) {
+          setError('❌ Something went wrong. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        // Step 3: Insert accessories if any
+        if (accessoryIds.length > 0) {
+          const accessoryInserts = accessoryIds.map((id) => ({
+            booking_id: booking.id,
+            accessory_id: id,
+          }));
+
+          const { error: accessoryInsertError } = await supabase
+            .from('booking_accessories')
+            .insert(accessoryInserts);
+
+          if (accessoryInsertError) {
+            setError('❌ Booking created, but failed to add accessories.');
+            setLoading(false);
+            return;
+          }
+        }
+
+        // ✅ Step 4: redirect to Stripe
         window.location.href = session.url;
       } else {
         setError('❌ Failed to start payment session.');
@@ -199,6 +198,14 @@ const MockPayment = () => {
           disabled={loading}
         >
           {loading ? 'Processing...' : 'Pay with Stripe'}
+        </button>
+
+        <button
+          onClick={() => navigate('/')}
+          className="btn btn-outline btn-error w-full mt-4"
+          disabled={loading}
+        >
+          Cancel and Go Back
         </button>
       </div>
     </div>
