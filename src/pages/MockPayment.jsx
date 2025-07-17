@@ -54,10 +54,9 @@ const MockPayment = () => {
       return;
     }
 
-    const userId = user.id;
     const { data: cycle, error: cycleError } = await supabase
       .from('cycles')
-      .select('location_id, price_per_day, name, available')
+      .select('name, price_per_day, available')
       .eq('id', cycleId)
       .single();
 
@@ -73,47 +72,26 @@ const MockPayment = () => {
       return;
     }
 
-    const { data: existingBookings, error: bookingsError } = await supabase
-      .from('bookings')
-      .select('start_time, end_time')
-      .eq('cycle_id', cycleId)
-      .in('status', ['confirmed', 'active']);
+    // Calculate total
+    const total = calculateTotal(
+      startDate,
+      endDate,
+      cycle.price_per_day,
+      accessoryData
+    );
 
-    if (bookingsError) {
-      setError('❌ Failed to check existing bookings.');
-      setLoading(false);
-      return;
-    }
-
-    const newStart = new Date(startDate);
-    const newEnd = new Date(endDate);
-
-    const isOverlapping = existingBookings.some((b) => {
-      const bookedStart = new Date(b.start_time);
-      const bookedEnd = new Date(b.end_time);
-      return newStart < bookedEnd && newEnd > bookedStart;
-    });
-
-    if (isOverlapping) {
-      setError('⚠️ This cycle is already booked during your selected dates.');
-      setLoading(false);
-      return;
-    }
-
-    // Step 1: Create Stripe Checkout session (mocked)
     try {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          price: calculateTotal(
-            startDate,
-            endDate,
-            cycle.price_per_day,
-            accessoryData
-          ),
+          price: total,
           cycleName: cycle.name,
-          success_url: `${window.location.origin}/booking-summary`,
+          success_url: `${
+            window.location.origin
+          }/booking-summary?cycle=${cycleId}&start=${startDate}&end=${endDate}&accessory=${accessoryIds.join(
+            ','
+          )}`,
           cancel_url: `${window.location.origin}/cancelled`,
         }),
       });
@@ -121,47 +99,6 @@ const MockPayment = () => {
       const session = await response.json();
 
       if (session.id) {
-        // Step 2: Insert booking AFTER we know session is valid
-        const { data: booking, error: bookingError } = await supabase
-          .from('bookings')
-          .insert([
-            {
-              user_id: userId,
-              cycle_id: cycleId,
-              start_time: startDate,
-              end_time: endDate,
-              location_id: cycle.location_id,
-              status: 'confirmed',
-            },
-          ])
-          .select()
-          .single();
-
-        if (bookingError || !booking) {
-          setError('❌ Something went wrong. Please try again.');
-          setLoading(false);
-          return;
-        }
-
-        // Step 3: Insert accessories if any
-        if (accessoryIds.length > 0) {
-          const accessoryInserts = accessoryIds.map((id) => ({
-            booking_id: booking.id,
-            accessory_id: id,
-          }));
-
-          const { error: accessoryInsertError } = await supabase
-            .from('booking_accessories')
-            .insert(accessoryInserts);
-
-          if (accessoryInsertError) {
-            setError('❌ Booking created, but failed to add accessories.');
-            setLoading(false);
-            return;
-          }
-        }
-
-        // ✅ Step 4: redirect to Stripe
         window.location.href = session.url;
       } else {
         setError('❌ Failed to start payment session.');
