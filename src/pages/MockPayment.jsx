@@ -6,6 +6,25 @@ const MockPayment = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Redirect to login if not logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        // 👇 Build a return path with all query params
+        const returnPath = `/payment?cycle=${cycleId}&start=${startDate}&end=${endDate}&accessory=${accessoryIds.join(
+          ','
+        )}`;
+        navigate(`/login?redirectTo=${encodeURIComponent(returnPath)}`);
+      }
+    };
+
+    checkUser();
+  }, []);
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [accessoryData, setAccessoryData] = useState([]);

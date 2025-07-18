@@ -172,12 +172,16 @@ const SearchResults = () => {
                             data: { user },
                           } = await supabase.auth.getUser();
 
+                          const cyclePath = `/cycle/${cycle.id}?start=${startDate}&end=${endDate}&location=${selectedLocation}`;
+
                           if (!user) {
-                            navigate('/login');
-                          } else {
                             navigate(
-                              `/cycle/${cycle.id}?start=${startDate}&end=${endDate}&location=${selectedLocation}`
+                              `/login?redirectTo=${encodeURIComponent(
+                                cyclePath
+                              )}`
                             );
+                          } else {
+                            navigate(cyclePath);
                           }
                         }}
                         disabled={!isAvailable}

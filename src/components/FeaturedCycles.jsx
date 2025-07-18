@@ -16,7 +16,7 @@ function FeaturedCycles() {
         .from('cycles')
         .select('*')
         .eq('available', true)
-        .limit(9); // ✅ Increased to 6
+        .limit(9); // ✅ Show up to 9
 
       if (error) {
         console.error('❌ Error fetching featured cycles:', error.message);
@@ -92,10 +92,13 @@ function FeaturedCycles() {
                           data: { user },
                         } = await supabase.auth.getUser();
 
+                        const cyclePath = `/cycle/${cycle.id}`;
                         if (!user) {
-                          navigate('/login');
+                          navigate(
+                            `/login?redirectTo=${encodeURIComponent(cyclePath)}`
+                          );
                         } else {
-                          navigate(`/cycle/${cycle.id}`);
+                          navigate(cyclePath);
                         }
                       }}
                     >
