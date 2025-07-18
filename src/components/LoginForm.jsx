@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import supabase from '../supabaseClient';
 
@@ -9,7 +9,13 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 🧠 Get redirect path from URL
+  const params = new URLSearchParams(location.search);
+  const redirectTo = params.get('redirectTo');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -35,8 +41,11 @@ function LoginForm() {
           .eq('id', user.id)
           .single();
 
+        // ✅ Redirect to original path if it exists
         if (profile?.role === 'employee') {
           navigate('/employee-dashboard');
+        } else if (redirectTo) {
+          navigate(redirectTo);
         } else {
           navigate('/');
         }
