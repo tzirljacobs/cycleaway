@@ -61,7 +61,11 @@ function Navbar() {
             onClick={() => setMenuOpen(!menuOpen)}
             className="btn btn-ghost btn-square"
           >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            {menuOpen ? (
+              <X size={24} color="black" />
+            ) : (
+              <Menu size={24} color="black" />
+            )}
           </button>
         </div>
 
