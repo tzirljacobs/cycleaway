@@ -39,7 +39,7 @@ function SearchBar() {
   return (
     <section id="search" className="w-full px-4">
       <form
-        className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 bg-white bg-opacity-95 p-4 sm:p-6 rounded-xl shadow-md"
+        className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 bg-base-100 p-4 sm:p-6 rounded-xl shadow-md"
         onSubmit={handleSubmit}
       >
         <div>
@@ -66,7 +66,9 @@ function SearchBar() {
           </label>
           <input
             type="date"
-            className="input input-bordered w-full"
+            className={`input input-bordered w-full ${
+              !startDate ? 'text-gray-400' : ''
+            }`}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
@@ -78,7 +80,9 @@ function SearchBar() {
           </label>
           <input
             type="date"
-            className="input input-bordered w-full"
+            className={`input input-bordered w-full ${
+              !endDate ? 'text-gray-400' : ''
+            }`}
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
           />
