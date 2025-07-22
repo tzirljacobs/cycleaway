@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-const config = {
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -9,11 +9,9 @@ const config = {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["cupcake"], // ← Just one built-in theme for now
-  },
+  themes: ["cupcake", "light", "dark", "valentine", "retro"],
+},
 };
-
-export default config;
 
 
 

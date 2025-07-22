@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -11,24 +11,18 @@ import MockPayment from './pages/MockPayment';
 import BookingSummary from './pages/BookingSummary';
 import CustomerBookings from './pages/CustomerBookings';
 import EmployeeDashboard from './pages/EmployeeDashboard';
-
 import ManageBookings from './pages/ManageBookings';
 import ManageCycles from './pages/ManageCycles';
 import ManageLocations from './pages/ManageLocations';
 import ManageAccessories from './pages/ManageAccessories';
-
 import { Routes, Route } from 'react-router-dom';
-
 import Login from './auth/Login';
 import SignUp from './auth/SignUp';
-import './printStyles.css';
 import Profile from './pages/Profile';
 import './printStyles.css';
 
 function App() {
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'cupcake');
-  }, []);
+  // ✅ This sets the theme on first render
 
   return (
     <>
@@ -47,7 +41,6 @@ function App() {
           <Route path="/cycle/:id" element={<CycleDetail />} />
           <Route path="/customer-bookings" element={<CustomerBookings />} />
           <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
-
           <Route path="/manage-bookings" element={<ManageBookings />} />
           <Route path="/manage-cycles" element={<ManageCycles />} />
           <Route path="/manage-locations" element={<ManageLocations />} />
