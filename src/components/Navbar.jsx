@@ -7,7 +7,7 @@ function Navbar() {
   const [user, setUser] = useState(null);
   const [userName, setUserName] = useState('');
   const [role, setRole] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false); // 👈 NEW
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,6 +60,7 @@ function Navbar() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="btn btn-ghost btn-square"
+            aria-label="Toggle menu"
           >
             {menuOpen ? (
               <X size={24} color="black" />
@@ -134,7 +135,10 @@ function UserLinks({ user, userName, onLogout, onLinkClick }) {
         </span>
       )}
       {user ? (
-        <button onClick={onLogout} className="btn btn-error w-full md:w-auto">
+        <button
+          onClick={onLogout}
+          className="btn btn-secondary w-full md:w-auto"
+        >
           Log Out
         </button>
       ) : (
@@ -150,7 +154,7 @@ function NavItem({ to, children, onClick }) {
   return (
     <NavLink
       to={to}
-      onClick={onClick} // 👈 this line is new
+      onClick={onClick}
       className={({ isActive }) =>
         `btn btn-ghost justify-start w-full md:w-auto ${
           isActive ? 'btn-active text-primary font-bold' : ''

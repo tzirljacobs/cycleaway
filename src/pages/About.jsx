@@ -3,24 +3,6 @@ import React from 'react';
 const About = () => {
   return (
     <div>
-      {/* ✅ THEME PICKER DROPDOWN GOES RIGHT HERE */}
-      <div className="p-4">
-        <select
-          className="select select-bordered"
-          data-choose-theme
-          defaultValue=""
-        >
-          <option disabled value="">
-            Pick theme
-          </option>
-          <option>cupcake</option>
-          <option>light</option>
-          <option>dark</option>
-          <option>retro</option>
-          <option>valentine</option>
-        </select>
-      </div>
-
       {/* Page Layout Grid */}
       <div className="grid md:grid-cols-2">
         {/* Image */}
