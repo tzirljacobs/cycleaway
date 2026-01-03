@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure swiper pagination is visible and styled */
+.swiper-pagination {
+  margin-top: 1rem;
+  text-align: center;
+  position: relative !important;
+}
+
+.swiper-pagination-bullet {
+  background-color: #cbd5e1; /* Tailwind slate-300 */
+  opacity: 0.6;
+  width: 10px;
+  height: 10px;
+  margin: 0 6px;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+  background-color: #3b82f6; /* Tailwind blue-500 */
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.swiper-pagination {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.swiper-pagination-bullets {
+  bottom: 0px !important;
+  position: relative;
+  margin-top: 1rem;
+  text-align: center;
+}

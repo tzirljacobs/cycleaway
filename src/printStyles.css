@@ -1,0 +1,85 @@
+@media print {
+  /* 🔒 Hide elements that shouldn't appear in print */
+  nav,
+  footer,
+  header,
+  .navbar,
+  .print-header,
+  .hidden-print,
+  .btn,
+  button,
+  select,
+  input,
+  .alert {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 🎯 Reset default spacing and style */
+  html,
+  body {
+    margin: 0;
+    padding: 1rem;
+    background: white !important;
+    color: black !important;
+    font-family: Georgia, serif !important;
+  }
+
+  /* 🧽 Clear layout width restrictions */
+  .max-w-6xl,
+  .max-w-4xl,
+  .max-w-xl {
+    max-width: 100% !important;
+  }
+
+  /* 🧼 Force top padding overrides (for Tailwind utility classes) */
+  .pt-28,
+  .pt-24,
+  .pt-20,
+  .pt-16,
+  .pt-12,
+  .pt-10,
+  .pt-8,
+  .pt-6,
+  .pt-4,
+  .pt-2,
+  .pt-1,
+  .pt-0 {
+    padding-top: 0 !important;
+  }
+
+  /* 📄 Table styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  th,
+  td {
+    border: 1px solid #333;
+    padding: 6px;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  /* 🧹 Remove visual clutter like rounded corners or shadows */
+  .shadow,
+  .rounded,
+  .rounded-xl {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* 📏 Ensure horizontal scrolling doesn’t affect print layout */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  /* 📐 Fix center text on screen but left-aligned in print */
+  .text-center {
+    text-align: left !important;
+  }
+}
